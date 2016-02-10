@@ -2,6 +2,7 @@ module TranslationCenter
   class ApplicationController < ActionController::Base
     before_filter :translation_langs_filters
     before_filter :authenticate_user!
+    before_filter :can_translate?
 
     if Rails.env.development?
 
@@ -25,8 +26,12 @@ module TranslationCenter
 
     protected
 
+    def can_translate?
+      redirect_to '/' unless current_user.can_translate?
+    end
+
     def can_admin?
-      current_user.can_admin_translations?
+      redirect_to root_url unless current_user.can_admin_translations?
     end
 
     def set_page_number

@@ -16,6 +16,11 @@ module ActsAsTranslator
     def can_admin_translations?
       true
     end
+
+    # returns true if the user can translate
+    def can_translate?
+      true
+    end
   end
 end
 
