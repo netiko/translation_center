@@ -19,14 +19,14 @@
         .tab-pane{ id: "add_translations#{translation_key.id}" }
 
           %em
-            - value_from = preserve maybe_to_yaml translation_key.translations.accepted.in(from_lang).first.try(:value).presence || t(translation_key.name)
-            - value_to   = preserve maybe_to_yaml translation_key.translations.accepted.in(to_lang).first.try(:value).presence   || t(translation_key.name, locale: to_lang)
+            - value_from = translation_key.translations.accepted.in(from_lang).first.try(:value).presence || "#{t(translation_key.name)}"
+            - value_to   = translation_key.translations.accepted.in(to_lang).first.try(:value).presence   || "#{t(translation_key.name, locale: to_lang)}"
             %div.alert.alert-info.yaml<
-              = value_from
+              = preserve h maybe_to_yaml value_from
             - if value_from != value_to
               %div.alert.alert-info.yaml<
-                = value_to
+                = preserve h maybe_to_yaml value_to
           %hr
           %div{ class: "user_translation well well-small yaml #{language_direction(to_lang)}", 'data-key-id' => translation_key.id }<
-            = preserve maybe_to_yaml current_user.translation_for(translation_key, to_lang).value
+            = preserve h maybe_to_yaml current_user.translation_for(translation_key, to_lang).value
 

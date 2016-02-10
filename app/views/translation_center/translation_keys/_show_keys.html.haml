@@ -14,7 +14,7 @@
     %p
       %b
         %em.yaml<
-          = preserve maybe_to_yaml t(translation_key.name)
+          = preserve h maybe_to_yaml "#{t(translation_key.name)}"
       %span
         %em.created_time
           = t('.created_on')
