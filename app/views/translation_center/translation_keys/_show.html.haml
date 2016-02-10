@@ -2,7 +2,7 @@
   %p
     .tabbable
       %ul.nav.nav-tabs
-        
+
         %li.active
           %a.translations_tab{'data-key-id' => translation_key.id, "data-toggle" => "tab", :href => "#translations#{translation_key.id}"}
             %span.badge.badge-info.pull-left.translations_count{ id: "translations_#{translation_key.id}_count"}
@@ -14,14 +14,19 @@
           %a{"data-toggle" => "tab", :href => "#add_translations#{translation_key.id}"}
             = t('.add_edit_translation')
       .tab-content
-        
         .tab-pane.active{ id: "translations#{translation_key.id}" }
           = render 'translation_center/translations/index', translations: translation_key.translations.order('created_at DESC').in(to_lang), translation_key: translation_key
         .tab-pane{ id: "add_translations#{translation_key.id}" }
-          
+
           %em
-            %b
-              = t(translation_key.name)
+            - value_from = preserve maybe_to_yaml translation_key.translations.accepted.in(from_lang).first.try(:value).presence || t(translation_key.name)
+            - value_to   = preserve maybe_to_yaml translation_key.translations.accepted.in(to_lang).first.try(:value).presence   || t(translation_key.name, locale: to_lang)
+            %div.alert.alert-info.yaml<
+              = value_from
+            - if value_from != value_to
+              %div.alert.alert-info.yaml<
+                = value_to
           %hr
-          %div{ class: "user_translation well well-small #{language_direction(to_lang)}", 'data-key-id' => translation_key.id }
-            = current_user.translation_for(translation_key, to_lang).value
+          %div{ class: "user_translation well well-small yaml #{language_direction(to_lang)}", 'data-key-id' => translation_key.id }<
+            = preserve maybe_to_yaml current_user.translation_for(translation_key, to_lang).value
+

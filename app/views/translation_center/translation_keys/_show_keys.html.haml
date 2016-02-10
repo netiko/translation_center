@@ -13,13 +13,13 @@
   %a{ href: "##{translation_key.id}", 'data-toggle' => "tab"}
     %p
       %b
-        %em
-          = t(translation_key.name)
+        %em.yaml<
+          = preserve maybe_to_yaml t(translation_key.name)
       %span
         %em.created_time
           = t('.created_on')
           = format_date(translation_key.created_at)
-    
+
     %small
       %div{ 'data-key-id' => translation_key.id, class: "#{translation_admin? ? 'key_editable' : '' }"}
         = translation_key.name

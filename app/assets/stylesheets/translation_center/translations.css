@@ -3,6 +3,9 @@
   They will automatically be included in application.css.
 */
 
+#trans_tab {
+  height: 100%;
+}
 .translations_listing {
   padding-left: 20px;
   height: 410px;

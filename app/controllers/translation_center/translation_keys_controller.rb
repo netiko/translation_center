@@ -5,21 +5,24 @@ module TranslationCenter
     before_filter :get_translation_key, except: [ :search ]
     before_filter :can_admin?, only: [ :destroy, :update ]
 
+    include TranslationKeysHelper
+
     # POST /translation_keys/1/update_translation.js
     def update_translation
       @translation = current_user.translation_for @translation_key, session[:lang_to]
       @key_before_status = @translation_key.status(session[:lang_to])
       respond_to do |format|
         # only admin can edit accepted translations
-        if (current_user.can_admin_translations? || !@translation.accepted?) && !params[:value].to_s.strip.blank?
+        if (current_user.can_admin_translations? || !@translation.accepted?) && !params[:value].blank?
           # use yaml.load to handle arrays
-          @translation.update(value: YAML.load(params[:value].strip), status: 'pending')
+          val = maybe_from_yaml params[:value].strip.gsub /\n\r?|\r\n?/, "\n"
+          @translation.update(value: val, status: 'pending')
           # translation added by admin is considered the accepted one as it is trusted
           @translation.accept if current_user.can_admin_translations? && CONFIG['accept_admin_translations']
-          format.json {render json: { value: @translation.value, status: @translation.key.status(@translation.lang), key_before_status: @key_before_status  } }
+          format.json {render json: { value: maybe_to_yaml(@translation.value), status: @translation.key.status(@translation.lang), key_before_status: @key_before_status  } }
         else
           format.any {render nothing: true}
-        end 
+        end
       end
     end
 
@@ -38,7 +41,7 @@ module TranslationCenter
     # GET /translation_keys/1
     def show
     end
-    
+
     # PUT /translation_keys/1
     # PUT /translation_keys/1.json
     def update
@@ -52,7 +55,7 @@ module TranslationCenter
         end
       end
     end
-  
+
     # DELETE /translation_keys/1
     # DELETE /translation_keys/1.json
     def destroy
@@ -60,7 +63,7 @@ module TranslationCenter
       @translation_key_id = @translation_key.id
       @key_status = @translation_key.status(session[:lang_to])
       @translation_key.destroy
-  
+
       respond_to do |format|
         format.js
         format.html {redirect_to @category, notice: I18n.t('translation_center.translation_keys.destroyed_successfully')}
@@ -88,6 +91,6 @@ module TranslationCenter
       id = params[:translation_key_id] || params[:id]
       @translation_key = TranslationKey.find(id)
     end
-    
+
   end
 end

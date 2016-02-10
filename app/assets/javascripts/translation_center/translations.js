@@ -34,7 +34,7 @@ $(document).ready(function() {
       url: Routes.translation_center_translation_key_translations_path($(this).attr('data-key-id')) + '.js'
     });
   });
-  
+
   $(document).on('mouseover', '.translations_vote',
     function() {
       $(this).addClass('badge-success');
@@ -59,14 +59,14 @@ $(document).ready(function() {
         type: 'POST',
         url: Routes.translation_center_translation_vote_path($(this).attr('data-translation-id')) + '.js'
       });
-     
+
 
     }
     // unvote
     else
     {
       $(this).removeClass('badge-success');
-      $(this).attr('voted', 'false') 
+      $(this).attr('voted', 'false')
       // TODO use I18n.t
       $(this).text('Vote');
       $.ajax({
@@ -125,7 +125,7 @@ function decrementTranslated(){
 function decrementPending(){
   var count = parseInt($('#pending_keys_count').text().replace('(', '').replace(')', '')) - 1;
   $('#pending_keys_count').text('(' + count +  ')');
-  
+
 }
 
 function incrementUntranslated(){
@@ -162,6 +162,7 @@ function editableTranslations(){
 
     $(this).editable(Routes.translation_center_translation_key_update_translation_path(key_id, {format: 'json'}), {
       method: 'POST',
+      type: 'textarea',
       onblur : 'submit',
       // TODO use I18n.t for translations
       placeholder : 'click to add or edit your translation',
@@ -188,7 +189,7 @@ function editableTranslations(){
             decrementPending();
             incrementTranslated();
           }
-          moveToNextKey($(this).attr('data-key-id')); 
+          moveToNextKey($(this).attr('data-key-id'));
         }
         else if(Filter.key() == 'all')
         {
@@ -206,7 +207,7 @@ function editableTranslations(){
         }
       }
 
-      
+
     });
     $(this).text($.trim($(this).text()));
   });
