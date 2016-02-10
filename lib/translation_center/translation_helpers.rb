@@ -43,12 +43,6 @@ module TranslationCenter
     # if a scope is passed in options then build the full key
     complete_key = options[:scope].present? ? "#{options[:scope].to_s}.#{complete_key}" : complete_key
 
-    # add the correct count suffix
-    if options[:count].present? && options[:count] == 1
-      complete_key = "#{complete_key}.one"
-    elsif options[:count].present? && options[:count] != 1
-      complete_key = "#{complete_key}.other"
-    end
     complete_key
   end
 

@@ -25,12 +25,12 @@ module TranslationCenter
   end
 
   # gets the translation of a a key in certian lang and inserts it in the db
-  # returns true if the translation was fonud in yaml 
+  # returns true if the translation was fonud in yaml
   def self.yaml2db_key(locale, translation_key, translator, all_yamls)
     I18n.locale = locale
     translation = TranslationCenter::Translation.find_or_initialize_by(translation_key_id: translation_key.id, lang: locale.to_s, translator_id: translator.id)
     translation.translator_type = TranslationCenter::CONFIG['translator_type']
-    
+
     # get the translation for this key from the yamls
     value = get_translation_from_hash(translation_key.name, all_yamls[locale])
 
@@ -39,10 +39,17 @@ module TranslationCenter
       puts "proc removed for key #{translation_key.name}"
       translation.destroy unless translation.new_record?
     elsif !value.blank? && value != translation.value
+      begin
       translation.update_attribute(:value, value)
       # accept this yaml translation
       translation.accept if TranslationCenter::CONFIG['yaml2db_translations_accepted']
       true
+      rescue TypeError => e
+        puts "translation removed for key #{translation_key.name}. error: #{e}"
+        translation.destroy unless translation.new_record?
+      end
+    else
+      ! translation.value.nil?
     end
   end
 
@@ -99,6 +106,27 @@ module TranslationCenter
     all_keys = all_yamls.collect do |check_locale, translations|
       collect_keys([], translations).sort
     end.flatten.uniq
+
+    # Use shared key for pluralizations (foo.one: Foo, foo.other: Foos -> foo: {one: Foo, other: Foos})
+    pluralization_regexp = /\.(zero|one|two|few|many|other)\Z/
+    remove_keys = []
+    all_keys.grep(pluralization_regexp).map do |key|
+      key_prefix = key.sub /\.[^.]+\Z/, ''
+      keys = all_keys.grep /\A#{key_prefix}\./
+      if keys.all? { |key| key =~ pluralization_regexp }
+        remove_keys << keys
+        all_keys << key_prefix
+      end
+    end
+    all_keys -= remove_keys.flatten.uniq
+    all_keys.uniq!.sort!
+    if filter = TranslationCenter::CONFIG['key_filter']
+      keys_before = all_keys.count
+      all_keys.reject! { |k| k =~ /#{filter}/ }
+      keys_filtered = keys_before - all_keys.count
+      puts "#{keys_filtered} #{keys_filtered == 1 ? 'key' : 'keys'} filtered" if keys_filtered.nonzero?
+    end
+
     puts "#{all_keys.size} #{all_keys.size == 1 ? 'unique key' : 'unique keys'} found."
 
     locales = locale.blank? ? I18n.available_locales : [locale.to_sym]
@@ -117,7 +145,7 @@ module TranslationCenter
       puts "Started exporting translations in #{locale}"
       TranslationCenter::TranslationKey.translated(locale).each do |key|
         begin
-          key.add_to_hash(result, locale)  
+          key.add_to_hash(result, locale)
         rescue
           puts "Error writing key: #{key.name} to yaml for #{locale}"
         end
@@ -126,7 +154,7 @@ module TranslationCenter
         file.write({locale.to_s => result}.ya2yaml)
       end
       puts "Done exporting translations of #{locale} to #{locale.to_s}.yml"
-    end 
+    end
   end
 
 end
