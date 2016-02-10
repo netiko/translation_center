@@ -4,7 +4,7 @@ module TranslationCenter
     before_filter :authenticate_user!
     before_filter :can_translate?
 
-    if Rails.env.development?
+    if Rails.env.development? && ! TranslationCenter::CONFIG['disable_send_error_report']
 
       # if an exception happens show the error page
       rescue_from Exception do |exception|

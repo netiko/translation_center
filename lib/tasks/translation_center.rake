@@ -4,9 +4,11 @@ require "net/http"
 namespace :translation_center do
 
   def send_exception(exception)
+    raise exception if TranslationCenter::CONFIG['disable_send_error_report']
+
     puts "An error has ocurred while performing this rake, would you like to send the exception to us so we may fix this problem ? press [Y/n]"
     confirm = $stdin.gets.chomp
-    
+
     if confirm.blank? || confirm == 'y' || confirm == 'yes'
       puts 'Sending ...'
       params = {message: "#{exception.message} #{exception.backtrace.join("\n")}"}
@@ -43,14 +45,14 @@ namespace :translation_center do
       if TranslationCenter::Category.any?
         puts "WARNING: You already have translations stored in the db, do you want to destroy them? press [Y|n]"
         confirm = $stdin.gets.chomp
-    
+
         TranslationCenter::Category.destroy_all if confirm.blank? || confirm == 'y' || confirm == 'yes'
       end
       TranslationCenter.yaml2db(args[:locale])
       TranslationCenter.db2yaml(args[:locale])
     rescue Exception => e
       send_exception(e)
-    end  
+    end
   end
 
 end
