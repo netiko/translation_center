@@ -26,11 +26,27 @@ module TranslationCenter
 
     # add a category of this translation key
     def add_category
-      category_name = self.name.to_s.split('.').first
-      # if one word then add to general category
-      category_name = self.name.to_s.split('.').size == 1 ? 'general' : self.name.to_s.split('.').first
       self.category = TranslationCenter::Category.where(name: category_name).first_or_create
       self.last_accessed = Time.now
+    end
+
+    MATCH_CATEGORY = (TranslationCenter::CONFIG["categories"] || []).map { |category|
+      if category =~ %r{\A/(.*)/\Z}
+        /#{$1}/
+      else
+        category = category.gsub(/\./, '\.').gsub(/\*/, '[^.]+')
+        if category =~ /\(.*\)/
+          /\A#{category}\./
+        else
+          /\A(#{category})\./
+        end
+      end
+    } << /\A([^.]+)\./
+
+    def category_name
+      # no match then add to general category
+      MATCH_CATEGORY.any? { |regex| name =~ regex }
+      $1 || 'general'
     end
 
     # updates the status of the translation key depending on the translations
