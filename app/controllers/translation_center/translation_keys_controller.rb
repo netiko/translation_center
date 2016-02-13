@@ -13,9 +13,9 @@ module TranslationCenter
       @key_before_status = @translation_key.status(session[:lang_to])
       respond_to do |format|
         # only admin can edit accepted translations
-        if (current_user.can_admin_translations? || !@translation.accepted?) && !params[:value].blank?
+        val = maybe_from_yaml params[:value].strip.gsub(/\n\r?|\r\n?/, "\n").presence
+        if (current_user.can_admin_translations? || !@translation.accepted?) && !val.nil?
           # use yaml.load to handle arrays
-          val = maybe_from_yaml params[:value].strip.gsub /\n\r?|\r\n?/, "\n"
           @translation.update(value: val, status: 'pending')
           # translation added by admin is considered the accepted one as it is trusted
           @translation.accept if current_user.can_admin_translations? && CONFIG['accept_admin_translations']

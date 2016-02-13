@@ -34,11 +34,12 @@ module TranslationCenter
     # get the translation for this key from the yamls
     value = get_translation_from_hash(translation_key.name, all_yamls[locale])
 
+    value.stringify_keys! if value.is_a? Hash
     # if the value is not empty and is different from the existing value the update
     if value.is_a? Proc
       puts "proc removed for key #{translation_key.name}"
       translation.destroy unless translation.new_record?
-    elsif !value.blank? && value != translation.value
+    elsif !value.nil? && value != translation.value
       begin
       translation.update_attribute(:value, value)
       # accept this yaml translation

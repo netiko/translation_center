@@ -1,7 +1,7 @@
 module TranslationCenter
   module TranslationKeysHelper
     def maybe_from_yaml val
-      if val =~ /\A--- *\n/
+      if val =~ /\A---[ \n]/
         YAML.load val
       else
         val
@@ -10,7 +10,13 @@ module TranslationCenter
 
     def maybe_to_yaml val
       case val
-      when String, Numeric, NilClass
+      when String
+        if val =~ /\A\s+|\s+\Z/
+          val.to_yaml
+        else
+          val
+        end
+      when Numeric, NilClass
         val
       else
         val.to_yaml

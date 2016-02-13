@@ -19,8 +19,8 @@
         .tab-pane{ id: "add_translations#{translation_key.id}" }
 
           %em
-            - value_from = translation_key.translations.accepted.in(from_lang).first.try(:value).presence || "#{t(translation_key.name)}"
-            - value_to   = translation_key.translations.accepted.in(to_lang).first.try(:value).presence   || "#{t(translation_key.name, locale: to_lang)}"
+            - value_from = (value = translation_key.translations.accepted.in(from_lang).first) ? value.value : (value = t(translation_key.name                 )).html_safe? ? h(value) : value
+            - value_to   = (value = translation_key.translations.accepted.in(to_lang  ).first) ? value.value : (value = t(translation_key.name, locale: to_lang)).html_safe? ? h(value) : value
             %div.alert.alert-info.yaml<
               = preserve h maybe_to_yaml value_from
             - if value_from != value_to

@@ -15,7 +15,8 @@ module TranslationCenter
     belongs_to :translator, polymorphic: true
 
     # Validations
-    validates :translation_key_id, :lang, :status, :value, presence: true
+    validates :translation_key_id, :lang, :status, presence: true
+    validates :value, presence: true, allow_blank: true
     validate :one_translation_per_lang_per_key, on: :create
 
     # Scopes
