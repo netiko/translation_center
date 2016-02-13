@@ -4,7 +4,7 @@ module TranslationCenter
   def self.prepare_translator
 
     translator = TranslationCenter::CONFIG['translator_type'].camelize.constantize.where(TranslationCenter::CONFIG['identifier_type'] => TranslationCenter::CONFIG['yaml_translator_identifier']).first
-    
+
     # if translator doesn't exist then create him
     if translator.blank?
       translator = TranslationCenter::CONFIG['translator_type'].camelize.constantize.new
@@ -41,7 +41,7 @@ module TranslationCenter
     complete_key  = key
 
     # if a scope is passed in options then build the full key
-    complete_key = options[:scope].present? ? "#{options[:scope].to_s}.#{complete_key}" : complete_key
+    complete_key = "#{options[:scope].is_a?(Array) ? options[:scope].join('.') : options[:scope].to_s}.#{complete_key}" if options[:scope].present?
 
     complete_key
   end
