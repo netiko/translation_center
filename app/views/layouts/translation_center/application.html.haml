@@ -22,18 +22,18 @@
           .nav-collapse.collapse.navbar-responsive-collapse
             %ul.nav
               %li.divider-vertical
-              / .pull-left.nav_text
-              /   = t('.from')
-              / %li.dropdown.pull-left
 
-              /   %a.dropdown-toggle{"data-toggle" => "dropdown", href: '#'}
-              /     = language_name(from_lang)
-              /     %b.caret
-              /   %ul.dropdown-menu
-              /     - I18n.available_locales.each do |locale|
-              /       %li
-              /         %a.language_from{ href: '#', lang_sym: locale}
-              /           = language_name(locale)
+              .pull-left.nav_text.language_from_nav
+                = t('translation_center.translate_from')
+              %li.dropdown.pull-left.language_from_nav
+                %a.dropdown-toggle{"data-toggle" => "dropdown", href: '#'}
+                  = language_name(from_lang)
+                  %b.caret
+                %ul.dropdown-menu
+                  - I18n.available_locales.each do |locale|
+                    %li
+                      %a.language_from{ href: change_from_locale_url(locale), lang_sym: locale}
+                        = language_name(locale)
 
               .pull-left.nav_text
                 %span
@@ -45,7 +45,7 @@
                 %ul.dropdown-menu
                   - I18n.available_locales.each do |locale|
                     %li
-                      %a.language_to{ href: change_locale_url(locale), lang_sym: locale}
+                      %a.language_to{ href: change_to_locale_url(locale), lang_sym: locale}
                         = language_name(locale)
               - if translation_admin?
                 .pull-left.nav_text

@@ -19,9 +19,11 @@ module TranslationCenter
     # defaults
     def translation_langs_filters
       session[:current_filter] ||= 'untranslated'
-      session[:lang_from] ||= I18n.default_locale
-      session[:lang_to] = params[:lang_to] || session[:lang_to] || :en
-      I18n.locale = session[:lang_from] || I18n.default_locale
+      session[:lang_from] = params[:lang_from] || session[:lang_from] || I18n.default_locale
+      session[:lang_from] = I18n.default_locale unless session[:lang_from].to_sym.in? I18n.available_locales
+      session[:lang_to] = params[:lang_to] || session[:lang_to] || I18n.default_locale
+      session[:lang_to] = I18n.default_locale unless session[:lang_to].to_sym.in? I18n.available_locales
+      I18n.locale = session[:lang_from]
     end
 
     protected

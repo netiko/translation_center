@@ -27,6 +27,11 @@
   color: white !important;
 }
 
+.language_from_nav {
+  display: none;
+}
+
+.navbar li.dropdown ul.dropdown-menu a.language_from,
 .navbar li.dropdown ul.dropdown-menu a.language_to {
   color: black !important;
 }
