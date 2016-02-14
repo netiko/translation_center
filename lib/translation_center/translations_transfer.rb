@@ -85,6 +85,14 @@ module TranslationCenter
     end
   end
 
+  def self.overlap(all_keys)
+    # check for overlapping keys (e.g foo and foo.bar)
+    overlap = all_keys.map do |key|
+      key if all_keys.grep(/\A#{key}\./).any?
+    end.compact
+    puts "overlapping keys: #{overlap.inspect}" if overlap.any?
+  end
+
   # take the yaml translations and update the db with them
   def self.yaml2db(locale=nil)
 
@@ -134,11 +142,14 @@ module TranslationCenter
 
     # create records for all keys that exist in the yaml
     yaml2db_keys(all_keys, translator, locales, all_yamls)
+
+    overlap(all_keys)
   end
 
   def self.db2yaml(locale=nil)
     locales = locale.blank? ? I18n.available_locales : [locale.to_sym]
 
+    all_keys = []
     # for each locale build a hash for the translations and write to file
     locales.each do |locale|
       result = {}
@@ -146,6 +157,7 @@ module TranslationCenter
       puts "Started exporting translations in #{locale}"
       TranslationCenter::TranslationKey.translated(locale).each do |key|
         begin
+          all_keys << key.name
           key.add_to_hash(result, locale)
         rescue
           puts "Error writing key: #{key.name} to yaml for #{locale}"
@@ -156,6 +168,8 @@ module TranslationCenter
       end
       puts "Done exporting translations of #{locale} to #{locale.to_s}.yml"
     end
+
+    overlap(all_keys.uniq)
   end
 
 end
