@@ -17,6 +17,8 @@ common_atts: &common_atts
   # when admins add/edit translations they are considered accepted directly
   accept_admin_translations: true
 
+  # instant_reload: true # Uncomment to cause db2yaml and accepting a translation to reload I18n data
+
   # identifier_type: 'email' # Uncomment and change the identifier if your User model has no email attribute
   # translator_type: 'User' # Uncomment and change if you want to change the translator type
 

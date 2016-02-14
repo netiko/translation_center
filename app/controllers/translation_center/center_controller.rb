@@ -16,9 +16,9 @@ module TranslationCenter
     # set language user translating to
     def set_language_to
       session[:lang_to] = params[:lang].to_sym
-      
+
       respond_to do |format|
-        format.html { redirect_to root_url } 
+        format.html { redirect_to root_url }
         format.js { render nothing: true }
       end
     end
@@ -43,7 +43,7 @@ module TranslationCenter
     def search_activity
       @translations_changes = ActivityQuery.new(params[:activity_query]).activities.offset(Translation::CHANGES_PER_PAGE * (@page - 1)).limit(Translation::CHANGES_PER_PAGE)
       @total_pages =  (ActivityQuery.new(params[:activity_query]).activities.count / (Translation::CHANGES_PER_PAGE * 1.0)).ceil
-      
+
       respond_to do |format|
         format.js
       end
@@ -52,7 +52,11 @@ module TranslationCenter
     def manage
       # if locale is all then send no locale
       locale = params[:locale] == 'all' ? nil : params[:locale]
-      TranslationCenter.send params[:manage_action], locale
+
+      if params[:manage_action].in?(['yaml2db', 'db2yaml']) && (locale.nil? || locale.to_s.to_sym.in?(I18n.available_locales))
+        TranslationCenter.send params[:manage_action], locale
+        I18n.reload! if TranslationCenter::CONFIG['instant_reload'] && params[:manage_action] == 'db2yaml'
+      end
 
       respond_to do |format|
         format.js

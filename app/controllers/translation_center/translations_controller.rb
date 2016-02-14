@@ -28,6 +28,10 @@ module TranslationCenter
       @translation = Translation.find(params[:translation_id])
       @translation_already_accepted = @translation.key.accepted_in? session[:lang_to]
       @translation.accept
+      if TranslationCenter::CONFIG['instant_reload']
+        hash = @translation.key.name.split('.').reverse.inject(@translation.value) { |data, key| { key => data } }
+        I18n.backend.store_translations(session[:lang_to], hash)
+      end
       respond_to do |format|
         format.js
       end
@@ -41,7 +45,7 @@ module TranslationCenter
         format.js
       end
     end
-  
+
     # DELETE /translations/1
     # DELETE /translations/1.json
     def destroy
