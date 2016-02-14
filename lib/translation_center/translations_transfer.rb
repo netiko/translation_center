@@ -155,7 +155,7 @@ module TranslationCenter
       result = {}
       I18n.locale = locale
       puts "Started exporting translations in #{locale}"
-      TranslationCenter::TranslationKey.translated(locale).each do |key|
+      TranslationCenter::TranslationKey.order(:name).translated(locale).each do |key|
         begin
           all_keys << key.name
           key.add_to_hash(result, locale)
@@ -164,7 +164,7 @@ module TranslationCenter
         end
       end
       File.open("config/locales/#{locale.to_s}.yml", 'w') do |file|
-        file.write({locale.to_s => result}.ya2yaml)
+        file.write(YAML.dump locale.to_s => result)
       end
       puts "Done exporting translations of #{locale} to #{locale.to_s}.yml"
     end

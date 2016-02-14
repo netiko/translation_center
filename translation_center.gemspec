@@ -41,8 +41,6 @@ Gem::Specification.new do |s|
   s.add_dependency "rails"
   s.add_dependency 'acts_as_votable'
 
-  s.add_dependency 'ya2yaml'
-
   s.add_dependency 'devise'
 
   s.add_dependency 'audited'

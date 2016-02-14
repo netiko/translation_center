@@ -11,7 +11,6 @@ PATH
       jquery-rails
       jquery-ui-rails
       rails
-      ya2yaml
 
 GEM
   remote: http://rubygems.org/
@@ -202,7 +201,6 @@ GEM
       thread_safe (~> 0.1)
     warden (1.2.3)
       rack (>= 1.0)
-    ya2yaml (0.31)
 
 PLATFORMS
   ruby
