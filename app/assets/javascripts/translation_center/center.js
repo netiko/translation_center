@@ -3,7 +3,7 @@
 
 $(document).ready(function(){
 
-  $('.datepicker').datepicker({"format": "dd/mm/yyyy", "weekStart": 1, "autoclose": true});
+  $('.datepicker').datepicker({"dateFormat": "yy-mm-dd", "weekStart": 1, "autoclose": true});
 
   $('.language_from').click(function(){
     var language_from = $.trim($(this).attr('lang_sym'));
@@ -28,7 +28,7 @@ $(document).ready(function(){
 
   $('#search_reset').click(function(){
     $('#search_form').children('input').each(function(){
-      $(this).val('')  
+      $(this).val('')
     })
     $('#search_form').children('select').val('');
     $('#search_activity').click();
@@ -44,12 +44,12 @@ $(document).ready(function(){
   });
 
   $("body").on({
-    ajaxStart: function() { 
+    ajaxStart: function() {
       $('#loading').show();
     },
-    ajaxStop: function() { 
+    ajaxStop: function() {
       $('#loading').hide();
-    }    
+    }
   });
 
 });

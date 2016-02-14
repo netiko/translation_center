@@ -3,8 +3,8 @@ module TranslationCenter
 
     # attr_accessible :value, :lang, :translation_key_id, :user_id, :status
     # serialize as we could store arrays
-    CHANGES_PER_PAGE = 5
-    NUMBER_PER_PAGE = 15
+    CHANGES_PER_PAGE = 20
+    NUMBER_PER_PAGE = 40
 
     # Statuses
     ACCEPTED = "accepted"

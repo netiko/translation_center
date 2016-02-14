@@ -19,8 +19,8 @@ module TranslationCenter
     # retuns and ActiveRecord Relation of Audit(s) that matches this search criteria
     def activities
       query = Audited::Audit.where(auditable_id: translation_ids).all
-      query = query.where("DATE(created_at) <= DATE(?)", created_at_lteq) unless created_at_lteq.blank?
-      query = query.where("DATE(created_at) >= DATE(?)", created_at_gteq) unless created_at_gteq.blank?
+      query = query.where("created_at <= ?", created_at_lteq.to_date) if created_at_lteq.to_date rescue nil
+      query = query.where("created_at >= ?", created_at_gteq.to_date) if created_at_gteq.to_date rescue nil
       query.order('created_at DESC')
     end
 
@@ -39,7 +39,7 @@ module TranslationCenter
         query = query.where(translator_id: translators_ids)
       end
 
-      query.map(&:id)
+      query
     end
   end
 end

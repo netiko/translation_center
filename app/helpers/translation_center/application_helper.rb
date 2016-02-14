@@ -13,12 +13,12 @@ module TranslationCenter
 
     # returns the display name of the language
     def language_name(lang)
-      TranslationCenter::CONFIG['lang'][lang.to_s]['name']
+      TranslationCenter::CONFIG['lang'].try(:[], lang.to_s).try(:[], 'name') || lang.to_s
     end
 
     # returns the direction of the language rtl or ltr
     def language_direction(lang)
-      TranslationCenter::CONFIG['lang'][lang.to_s]['direction']
+      TranslationCenter::CONFIG['lang'].try(:[], lang.to_s).try(:[], 'direction') || 'ltr'
     end
 
     # returns the current status filter for translation keys
