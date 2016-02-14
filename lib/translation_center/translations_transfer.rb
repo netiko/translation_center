@@ -138,8 +138,8 @@ module TranslationCenter
 
     puts "#{all_keys.size} #{all_keys.size == 1 ? 'unique key' : 'unique keys'} found."
 
-    locales = locale.blank? ? I18n.available_locales : [locale.to_sym]
 
+    locales = locale.blank? ? I18n.available_locales : locale.split(' ').map(&:to_sym)
     # create records for all keys that exist in the yaml
     yaml2db_keys(all_keys, translator, locales, all_yamls)
 
@@ -147,7 +147,7 @@ module TranslationCenter
   end
 
   def self.db2yaml(locale=nil)
-    locales = locale.blank? ? I18n.available_locales : [locale.to_sym]
+    locales = locale.blank? ? I18n.available_locales : locale.split(' ').map(&:to_sym)
 
     all_keys = []
     # for each locale build a hash for the translations and write to file
