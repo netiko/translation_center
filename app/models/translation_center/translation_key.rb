@@ -179,7 +179,9 @@ module TranslationCenter
     # send the hash and the language as parameters
     def add_to_hash(all_translations, lang)
       levels = self.name.split('.')
-      add_to_hash_rec(all_translations, levels, lang.to_s)
+      value = add_to_hash_rec(all_translations, levels, lang.to_s)
+      all_translations.merge! value if levels.count == 1
+      value
     end
 
     private
