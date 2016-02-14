@@ -13,7 +13,10 @@ module TranslationCenter
       @key_before_status = @translation_key.status(session[:lang_to])
       respond_to do |format|
         # only admin can edit accepted translations
-        val = maybe_from_yaml params[:value].strip.gsub(/\n\r?|\r\n?/, "\n").presence
+        begin
+          val = maybe_from_yaml params[:value].strip.gsub(/\n\r?|\r\n?/, "\n").presence
+        rescue Psych::SyntaxError
+        end
         if (current_user.can_admin_translations? || !@translation.accepted?) && !val.nil?
           # use yaml.load to handle arrays
           @translation.update(value: val, status: 'pending')
