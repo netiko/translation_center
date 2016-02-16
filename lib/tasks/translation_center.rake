@@ -39,6 +39,21 @@ namespace :translation_center do
     end
   end
 
+  desc "Delete keys From db that don't exist in yaml and delete categories with 0 keys"
+  task :deldbkeys, [:dry_run, :locales] => :environment do |t, args|
+    begin
+      locales = args[:locales].to_s.split(/[ .:;]/) + args.extras
+      if args[:dry_run] =~ /1|on|true|yes/
+        dry_run = true
+      elsif args[:dry_run].present?
+        locales.push args[:dry_run]
+      end
+      TranslationCenter.deldbkeys(locales, dry_run)
+    rescue Exception => e
+      send_exception(e)
+    end
+  end
+
   desc "Calls yaml2db then db2yaml"
   task :synch, [:locale ] => :environment do |t, args|
     begin

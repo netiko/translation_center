@@ -168,8 +168,42 @@ module TranslationCenter
       end
       puts "Done exporting translations of #{locale} to #{locale.to_s}.yml"
     end
+  end
 
-    overlap(all_keys.uniq)
+  def self.deldbkeys(locales = nil, dry_run = false)
+    if locales.present?
+      locales = locales.split(/[ .,:;]/) if locales.is_a? String
+      locales = locales.map(&:to_sym)
+      if (locales - I18n.available_locales).any? || locales.none?
+        puts "invalid locale: #{locales - I18n.available_locales}"
+        return
+      end
+    end
+
+    I18n.backend.send(:init_translations)
+    all_yamls = I18n.backend.send(:translations)
+    all_yamls.select! { |loc| loc.in? locales } if locales.present?
+    yaml_keys = keys_in_yamls all_yamls
+    num = { keys: 0 }
+
+    db_keys = TranslationCenter::TranslationKey.pluck(:name) - yaml_keys
+    if dry_run
+      puts db_keys
+      num[:keys] += db_keys.count
+
+      puts "would have removed #{num[:keys]} keys"
+    else
+      db_keys.each_slice(100) do |keys|
+        num[:keys] += TranslationCenter::TranslationKey.where(name: keys).destroy_all.count
+      end
+
+      num[:categories] = TranslationCenter::Category.joins('LEFT JOIN translation_center_translation_keys ON translation_center_translation_keys.category_id = translation_center_categories.id')
+        .where(translation_center_translation_keys: { id: nil }).destroy_all.count
+
+      puts "removed #{num[:keys]} keys and #{num[:categories]} categories"
+    end
+
+    num
   end
 
 end
