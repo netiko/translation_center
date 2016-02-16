@@ -16,7 +16,6 @@ module TranslationCenter
 
     # Validations
     validates :translation_key_id, :lang, :status, presence: true
-    validates :value, presence: true, allow_blank: true
     validate :one_translation_per_lang_per_key, on: :create
 
     # Scopes
@@ -62,7 +61,7 @@ module TranslationCenter
 
     # called after save to update the key status
     def update_key_status
-      self.key.update_status(self.lang)
+      self.key.update_status(self.lang) if self.status_changed? || id_was.nil? # use id_was.nil? since new_record? returns false in afer save
     end
 
     # called before destory to update the key status

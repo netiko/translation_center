@@ -1,14 +1,11 @@
 module TranslationCenter
 
-  # needed for interpolated translations in I18n
-  def self.get_translation_from_hash(key, hash)
-    path = key.split('.')
-    last_step = hash
-    path.each do |step|
-      break if last_step.blank? || !last_step.is_a?(Hash)
-      last_step = last_step[step.to_s.to_sym]
+  def self.deep_sort hash
+    if hash.is_a? Hash
+      hash.keys.sort.each_with_object({}) { |k,new| new[k] = deep_sort hash[k] }
+    else
+      hash
     end
-    last_step
   end
 
   def self.collect_keys(scope, translations)
@@ -24,59 +21,99 @@ module TranslationCenter
     return full_keys
   end
 
-  # gets the translation of a a key in certian lang and inserts it in the db
-  # returns true if the translation was fonud in yaml
-  def self.yaml2db_key(locale, translation_key, translator, all_yamls)
-    I18n.locale = locale
-    translation = TranslationCenter::Translation.find_or_initialize_by(translation_key_id: translation_key.id, lang: locale.to_s, translator_id: translator.id)
-    translation.translator_type = TranslationCenter::CONFIG['translator_type']
+  # takes kay and translation and updates its value
+  def self.update_translation(key, translation, all_yamls)
+    has_value = true
+    path = key.name.split('.')
+    value = all_yamls[translation.lang.to_sym] || {}
+    path.each do |step|
+      step_sym = step.to_sym
+      unless value.has_key? step_sym
+        has_value = false
+        break
+      end
+      value = value[step_sym]
+    end
+    value = value.stringify_keys if value.is_a? Hash
 
-    # get the translation for this key from the yamls
-    value = get_translation_from_hash(translation_key.name, all_yamls[locale])
-
-    value.stringify_keys! if value.is_a? Hash
-    # if the value is not empty and is different from the existing value the update
-    if value.is_a? Proc
-      puts "proc removed for key #{translation_key.name}"
+    if ! has_value
       translation.destroy unless translation.new_record?
-    elsif !value.nil? && value != translation.value
-      begin
-      translation.update_attribute(:value, value)
-      # accept this yaml translation
-      translation.accept if TranslationCenter::CONFIG['yaml2db_translations_accepted']
+      false
+    elsif value.is_a?(Proc)
+      puts "proc removed for translation #{translation.lang}.#{key.name}"
+      translation.destroy unless translation.new_record?
       true
-      rescue TypeError => e
-        puts "translation removed for key #{translation_key.name}. error: #{e}"
+    elsif translation.value != value || translation.new_record?
+      begin
+        translation.update_attribute(:value, value)
+        translation.accept if TranslationCenter::CONFIG['yaml2db_translations_accepted']
+        true
+      rescue StandardError => e
+        puts "invalid translation: #{translation.lang}.#{key.name}: #{value.inspect}: #{e}"
         translation.destroy unless translation.new_record?
+        false
       end
     else
-      ! translation.value.nil?
+      true
     end
   end
 
+  # takes key and creates locale and creates a new translation
+  def self.ceate_missing_translation(key, locale, translator, all_yamls)
+    translation = TranslationCenter::Translation.new translation_key: key, lang: locale,
+      translator_type: TranslationCenter::CONFIG['translator_type'], translator: translator
+
+    update_translation key, translation, all_yamls
+  end
+
   # takes array of keys and creates/updates the keys in the db with translations in the given locales
-  def self.yaml2db_keys(keys, translator, locales, all_yamls)
+  def self.yaml2db_keys(all_keys, translator, locales, all_yamls)
     # initialize stats variables
     new_keys = 0
     missing_keys = locales.inject({}) do |memo, lang|
       memo[lang] = 0
       memo
     end
+    options = { translator_id: translator.id }
+    options.merge!(lang: locales) if (I18n.available_locales - locales).present?
 
-    # for each key create it in the db if it doesn't exist, and add its translation to
-    # the db in every locale
-    keys.each do |key|
-      translation_key = TranslationCenter::TranslationKey.find_or_initialize_by(name: key)
-      if translation_key.new_record?
-        translation_key.save
+    all_keys.each_slice(20) do |key_names|
+      present_keys = []
+
+      # update keys that exist in the db
+      keys = TranslationCenter::TranslationKey.where(name: key_names)
+      ActiveRecord::Associations::Preloader.new.preload(keys, [:translations], TranslationCenter::Translation.where(options))
+      keys.each do |key|
+        present_keys << key.name
+        present_locales = []
+
+        # update translations that exist in the db
+        key.translations.each do |translation|
+          locale = translation.lang.to_sym
+          present_locales << locale
+          missing_keys[locale] += 1 unless update_translation(key, translation, all_yamls)
+        end
+
+        # create missing translations for existing keys
+        (locales - present_locales).each do |locale|
+          missing_keys[locale] += 1 unless ceate_missing_translation(key, locale, translator, all_yamls)
+        end
+      end
+
+      missing = key_names - present_keys
+
+      # create missing keys
+      missing.each do |key_name|
         new_keys += 1
-      end
 
-      # for each locale create/update its translation
-      locales.each do |locale|
-        missing_keys[locale] += 1 unless self.yaml2db_key(locale, translation_key, translator, all_yamls)
-      end
+        key = TranslationCenter::TranslationKey.new(name: key_name)
+        key.save
 
+        # create translations
+        locales.each do |locale|
+          missing_keys[locale] += 1 unless ceate_missing_translation(key, locale, translator, all_yamls)
+        end
+      end
     end
 
     puts "found new #{new_keys} key(s)"
@@ -85,12 +122,46 @@ module TranslationCenter
     end
   end
 
-  def self.overlap(all_keys)
+  def self.overlap()
+    I18n.backend.send(:init_translations)
+    all_yamls = I18n.backend.send(:translations)
+    all_keys = keys_in_yamls all_yamls
+
     # check for overlapping keys (e.g foo and foo.bar)
     overlap = all_keys.map do |key|
       key if all_keys.grep(/\A#{key}\./).any?
     end.compact
     puts "overlapping keys: #{overlap.inspect}" if overlap.any?
+    overlap
+  end
+
+  def self.keys_in_yamls all_yamls
+    all_keys = all_yamls.collect do |check_locale, translations|
+      collect_keys([], translations).sort
+    end.flatten.uniq
+
+    # Use shared key for pluralizations (foo.one: Foo, foo.other: Foos -> foo: {one: Foo, other: Foos})
+    pluralization_regexp = /\.(zero|one|two|few|many|other)\Z/
+    remove_keys = []
+    all_keys.grep(pluralization_regexp).map do |key|
+      key_prefix = key.sub /\.[^.]+\Z/, ''
+      keys = all_keys.grep /\A#{key_prefix}\./
+      if keys.all? { |key| key =~ pluralization_regexp }
+        remove_keys << keys
+        all_keys << key_prefix
+      end
+    end
+    all_keys -= remove_keys.flatten.uniq
+    all_keys.uniq!.sort!
+
+    if filter = TranslationCenter::CONFIG['key_filter']
+      keys_before = all_keys.count
+      all_keys.reject! { |k| k =~ /#{filter}/ }
+      keys_filtered = keys_before - all_keys.count
+      puts "#{keys_filtered} #{keys_filtered == 1 ? 'key' : 'keys'} filtered" if keys_filtered.nonzero?
+    end
+
+    all_keys
   end
 
   # take the yaml translations and update the db with them
@@ -112,55 +183,36 @@ module TranslationCenter
 
     # Get all keys from all locales
     all_yamls = I18n.backend.send(:translations)
-    all_keys = all_yamls.collect do |check_locale, translations|
-      collect_keys([], translations).sort
-    end.flatten.uniq
-
-    # Use shared key for pluralizations (foo.one: Foo, foo.other: Foos -> foo: {one: Foo, other: Foos})
-    pluralization_regexp = /\.(zero|one|two|few|many|other)\Z/
-    remove_keys = []
-    all_keys.grep(pluralization_regexp).map do |key|
-      key_prefix = key.sub /\.[^.]+\Z/, ''
-      keys = all_keys.grep /\A#{key_prefix}\./
-      if keys.all? { |key| key =~ pluralization_regexp }
-        remove_keys << keys
-        all_keys << key_prefix
-      end
-    end
-    all_keys -= remove_keys.flatten.uniq
-    all_keys.uniq!.sort!
-    if filter = TranslationCenter::CONFIG['key_filter']
-      keys_before = all_keys.count
-      all_keys.reject! { |k| k =~ /#{filter}/ }
-      keys_filtered = keys_before - all_keys.count
-      puts "#{keys_filtered} #{keys_filtered == 1 ? 'key' : 'keys'} filtered" if keys_filtered.nonzero?
-    end
+    all_keys = keys_in_yamls all_yamls
 
     puts "#{all_keys.size} #{all_keys.size == 1 ? 'unique key' : 'unique keys'} found."
-
 
     locales = locale.blank? ? I18n.available_locales : locale.split(' ').map(&:to_sym)
     # create records for all keys that exist in the yaml
     yaml2db_keys(all_keys, translator, locales, all_yamls)
-
-    overlap(all_keys)
   end
 
   def self.db2yaml(locale=nil)
     locales = locale.blank? ? I18n.available_locales : locale.split(' ').map(&:to_sym)
 
-    all_keys = []
     # for each locale build a hash for the translations and write to file
     locales.each do |locale|
-      result = {}
-      I18n.locale = locale
       puts "Started exporting translations in #{locale}"
-      TranslationCenter::TranslationKey.order(:name).translated(locale).each do |key|
+      all_keys = {}
+      TranslationCenter::Translation.where(lang: locale, status: 'accepted').includes(:translation_key).in_batches do |batch|
+        batch.each do |t|
+          all_keys[t.key.name] = t.value
+        end
+      end
+      result = {}
+      all_keys.sort.each do |full_key, value|
         begin
-          all_keys << key.name
-          key.add_to_hash(result, locale)
+          keys = full_key.split('.')
+          last_key = keys.pop
+          hash = keys.inject(result) { |hash, key| hash[key] ||= {} }
+          hash[last_key] = value
         rescue
-          puts "Error writing key: #{key.name} to yaml for #{locale}"
+          puts "Error writing key: #{locale}.#{full_key} to yaml"
         end
       end
       File.open("config/locales/#{locale.to_s}.yml", 'w') do |file|

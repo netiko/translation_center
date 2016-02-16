@@ -11,7 +11,7 @@ module TranslationCenter
     def maybe_to_yaml val
       case val
       when String
-        if val =~ /\A\s+|\s+\Z/
+        if val =~ /\A\s+|\s+\Z|\A\Z/
           val.to_yaml
         else
           val

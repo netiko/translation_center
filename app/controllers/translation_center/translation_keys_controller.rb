@@ -14,10 +14,12 @@ module TranslationCenter
       respond_to do |format|
         # only admin can edit accepted translations
         begin
-          val = maybe_from_yaml params[:value].strip.gsub(/\n\r?|\r\n?/, "\n").presence
+          val = params[:value].strip.gsub(/\n\r?|\r\n?/, "\n").presence
+          invalid = true if val.nil?
+          val = maybe_from_yaml val
         rescue Psych::SyntaxError
         end
-        if (current_user.can_admin_translations? || !@translation.accepted?) && !val.nil?
+        if (current_user.can_admin_translations? || !@translation.accepted?) && ! invalid
           # use yaml.load to handle arrays
           @translation.update(value: val, status: 'pending')
           # translation added by admin is considered the accepted one as it is trusted

@@ -35,7 +35,7 @@ module TranslationCenter
         /#{$1}/
       else
         category = category.gsub(/\./, '\.').gsub(/\*/, '[^.]+')
-        if category =~ /\(.*\)/
+        if category =~ /\((?!\?:).*\)/
           /\A#{category}\./
         else
           /\A(#{category})\./
