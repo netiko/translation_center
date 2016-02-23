@@ -54,6 +54,12 @@ namespace :translation_center do
     end
   end
 
+  desc "Translates missing keys"
+  task :translate_yaml, [:from_locale, :to_locale] => :environment do |t, args|
+    to_locale = args[:to_locale].to_s.split(/[ .:;]/) + args.extras
+    TranslationCenter.translate_yaml(args[:from_locale], to_locale)
+  end
+
   desc "Calls yaml2db then db2yaml"
   task :synch, [:locale ] => :environment do |t, args|
     begin

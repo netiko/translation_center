@@ -49,6 +49,8 @@ Gem::Specification.new do |s|
   s.add_dependency 'jquery-ui-rails'
   s.add_dependency 'font-awesome-rails'
 
+  s.add_dependency 'bing_translator'
+
   s.add_dependency 'haml'
   s.add_dependency 'haml-rails'
 end
