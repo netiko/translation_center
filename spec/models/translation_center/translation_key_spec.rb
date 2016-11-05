@@ -47,15 +47,15 @@ module TranslationCenter
       end
       
       it "it should count translated keys for language" do
-        expect(TranslationKey.translated_count(language)).to eq TranslationKey.where(:"#{language}_status" => TranslationKey::TRANSLATED).count
+        expect(TranslationKey.translated_count(language)).to eq TranslationKey.where(:"#{language.downcase.gsub("-","_")}_status" => TranslationKey::TRANSLATED).count
       end
 
       it "it should count pending keys for language" do
-        expect(TranslationKey.pending_count(language)).to eq TranslationKey.where(:"#{language}_status" => TranslationKey::PENDING).count
+        expect(TranslationKey.pending_count(language)).to eq TranslationKey.where(:"#{language.downcase.gsub("-","_")}_status" => TranslationKey::PENDING).count
       end
 
       it "it should count untranslated keys for language" do
-        expect(TranslationKey.untranslated_count(language)).to eq TranslationKey.where(:"#{language}_status" => TranslationKey::UNTRANSLATED).count
+        expect(TranslationKey.untranslated_count(language)).to eq TranslationKey.where(:"#{language.downcase.gsub("-","_")}_status" => TranslationKey::UNTRANSLATED).count
       end
     end
 
@@ -93,7 +93,7 @@ module TranslationCenter
       end
 
       it "should update translation key status to untranslated" do
-        translation_key.update_attribute(:"#{language}_status",  TranslationKey::UNTRANSLATED)
+        translation_key.update_attribute(:"#{language.downcase.gsub("-","_")}_status",  TranslationKey::UNTRANSLATED)
         expect(translation_key.status(language)).to eq TranslationKey::UNTRANSLATED
       end
     end

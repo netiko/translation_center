@@ -13,19 +13,19 @@ require 'spec_helper'
       end
 
       it "should return keys that are pended in the language" do 
-		pending_keys = category.pending_keys(translation.lang).collect(&:"#{translation.lang}_status").uniq
+		pending_keys = category.pending_keys(translation.lang).collect(&:"#{translation.lang.downcase.gsub("-","_")}_status").uniq
              expect(pending_keys.length).to be < 2
 		expect(["pending" , nil]).to include pending_keys.first
       end
 
       it "should return keys that have no translations in the language" do 
-		untranslated = category.untranslated_keys(translation.lang).collect(&:"#{translation.lang}_status").uniq
+		untranslated = category.untranslated_keys(translation.lang).collect(&:"#{translation.lang.downcase.gsub("-","_")}_status").uniq
 		expect(untranslated.length).to be < 2
 		expect(["untranslated" , nil]).to include untranslated.first
       end
 
       it "should return keys that have translations in the language" do 
-		translated_keys = category.accepted_keys(translation.lang).collect(&:"#{translation.lang}_status").uniq
+		translated_keys = category.accepted_keys(translation.lang).collect(&:"#{translation.lang.downcase.gsub("-","_")}_status").uniq
 		expect(translated_keys.length).to be < 2
 		expect(["translated" , nil]).to include translated_keys.first
       end

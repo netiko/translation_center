@@ -24,7 +24,7 @@ RSpec.configure do |config|
   require 'factory_girl_rails'
 
   config.include Rails.application.routes.url_helpers
-  config.include Devise::TestHelpers, type: :controller
+  config.include Devise::Test::ControllerHelpers, type: :controller
   config.order = "random"
   config.before(:suite) do
     DatabaseCleaner.strategy = :transaction
@@ -39,7 +39,7 @@ RSpec.configure do |config|
 end
 
 class ActionController::TestCase
-  include Devise::TestHelpers
+  include Devise::Test::ControllerHelpers
 end
 
 # ActionView::TestCase::TestController.instance_eval do

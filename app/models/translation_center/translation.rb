@@ -35,7 +35,6 @@ module TranslationCenter
     end
 
     # Callbacks
-    before_save :ensure_pluralization_complete
     after_save :update_key_status
     after_destroy :notify_key
 
@@ -45,6 +44,9 @@ module TranslationCenter
 
     # Serialize as we could store arrays
     serialize :value
+=begin
+
+    before_save :ensure_pluralization_complete
 
     PLURAL_KEYS = I18n.available_locales.map{ |locale| [locale.to_s, I18n.t('i18n.plural.keys', locale: locale).try(:map, &:to_s) || []] }.to_h
 
@@ -58,7 +60,7 @@ module TranslationCenter
         end
       end
     end
-
+=end
     # called after save to update the key status
     def update_key_status
       self.key.update_status(self.lang) if self.status_changed? || id_was.nil? # use id_was.nil? since new_record? returns false in afer save

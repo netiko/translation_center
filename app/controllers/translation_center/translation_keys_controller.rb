@@ -14,7 +14,7 @@ module TranslationCenter
       respond_to do |format|
         # only admin can edit accepted translations
         begin
-          val = params[:value].strip.gsub(/\n\r?|\r\n?/, "\n").presence
+          val = params[:value].to_s.strip.gsub(/\n\r?|\r\n?/, "\n").presence
           invalid = true if val.nil?
           val = maybe_from_yaml val
         rescue Psych::SyntaxError

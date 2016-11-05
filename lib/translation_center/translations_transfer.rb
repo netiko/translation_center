@@ -248,13 +248,13 @@ module TranslationCenter
     locales.each do |locale|
       puts "Started exporting translations in #{locale}"
       all_keys = {}
-      TranslationCenter::Translation.where(lang: locale, status: 'accepted').includes(:translation_key).in_batches do |batch|
+      TranslationCenter::Translation.where(lang: locale, status: 'accepted').includes(:translation_key).find_in_batches do |batch|
         batch.each do |t|
           all_keys[t.key.name] = t.value
         end
       end
       result = deep_sort unflatten all_keys
-      File.open("config/locales/#{locale.to_s}.yml", 'w') do |file|
+      File.open("config/locales/translationcenter_#{locale.to_s}.yml", 'w') do |file|
         file.write(YAML.dump locale.to_s => result)
       end
       puts "Done exporting translations of #{locale} to #{locale.to_s}.yml"

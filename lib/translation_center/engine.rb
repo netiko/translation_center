@@ -17,5 +17,9 @@ module TranslationCenter
       g.assets false
       g.helper false
     end
+    
+    initializer "translation_center.precompile", group: :all do |app|
+      app.config.assets.precompile += %w( translation_center/* )
+    end
   end
 end
