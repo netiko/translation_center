@@ -60,6 +60,8 @@
             %ul.nav.pull-right
               %li
                 = link_to t('translation_center.back_to_app'), '/', target: Rails.application.class.parent_name
+              %li
+                = link_to t('logout'), destroy_session_path(:admin_user), :method=>'delete'
     - if flash[:alert]
       .alert.alert-error
         %button{ type: 'button', class: 'close', 'data-dismiss' => 'alert' }
